@@ -9,7 +9,7 @@ export const Title = styled.div`
   color:white;
   text-align:center;
   padding-top: 1%;
-  font-size: 40px;
+  font-size: 25px;
   font-weight: 600;
 `;
 
@@ -18,3 +18,6 @@ export const DivImport = styled.div`
     padding-left: 160px;
     padding-top: 7rem;
 `;
+
+
+

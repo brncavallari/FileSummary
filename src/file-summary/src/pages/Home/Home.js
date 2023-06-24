@@ -1,50 +1,85 @@
 import * as S from './Styled'
-import * as React from 'react';
+import React, { useRef } from 'react';
 import {  TablePagination, Paper, TableContainer, Table, TableHead, TableBody, TableRow, TableCell } from '@mui/material';
 import Stack from '@mui/material/Stack';
 import Button from '@mui/material/Button';
 import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
-import AttachFileOutlinedIcon from '@mui/icons-material/AttachFileOutlined';
+import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { IconButton } from '@mui/material';
+import RecyclingIcon from '@mui/icons-material/Recycling';
 
 const columns = [
-  { id: 'name', label: 'Name', minWidth: 2,align: 'center'},
-  { id: 'code', label: 'ISO Code', minWidth: 2 ,align: 'center'},
-  {
-    id: 'population',
-    label: 'Population',
-    minWidth: 10,
-    align: 'center',
-    format: (value) => value.toLocaleString('pt-BR'),
+  { 
+    id: 'id',
+    label: 'Id',
+    minWidth: 2,
+    align: 'center'},
+  { 
+    id: 'workItem',
+    label: 'Work Item',
+    minWidth: 2 ,
+    align: 'center'
+  },
+  { 
+    id: 'title',
+    label: 'Titulo',
+    minWidth: 2 ,
+    align: 'center'
   },
   {
-    id: 'size',
-    label: 'Size\u00a0(km\u00b2)',
+    id: 'name',
+    label: 'Nome',
     minWidth: 10,
-    align: 'center',
-    format: (value) => value.toLocaleString('pt-BR'),
+    align: 'center'
   },
   {
-    id: 'density',
-    label: 'Density',
-    minWidth: 10,
-    align: 'center',
-    format: (value) => value.toFixed(2),
+    id: 'situation',
+    label: 'Situação',
+    minWidth: 2,
+    align: 'center'
+  },
+  {
+    id: 'completeHour',
+    label: 'Realizado',
+    minWidth: 2,
+    align: 'center'
+  },
+  {
+    id: 'estimateHour',
+    label: 'Estimado',
+    minWidth: 2,
+    align: 'center'
+  },
+  {
+    id: 'team',
+    label: 'Time',
+    minWidth: 2,
+    align: 'center'
   },
 ];
 
-function createData(name, code, population, size) {
-  const density = population / size;
-  return { name, code, population, size, density };
-}
-
-const rows = [
-  createData('Brasil', 'BR', 1324171354, 3287263),
-];
-
+//Incio da Funcao Home !!
 function Home() {
+  const fileInputRef = useRef(null);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [entities, setEntities] = React.useState([]);
+
+  function createEntity (line) {
+    const [ID, WorkItemType, Title, AssignedTo, State, CompletedWork, OriginalEstimate, IterationPath] = line.split(',');
+    const entity = {
+      id: ID.replace(/"/g, ''),
+      workItem: WorkItemType.replace(/"/g, ''),
+      title: Title.replace(/"/g, ''),
+      name: AssignedTo.replace(/"/g, ''),
+      situation: State.replace(/"/g, ''),
+      completeHour: CompletedWork.replace(/"/g, ''),
+      estimateHour: OriginalEstimate.replace(/"/g, ''),
+      team: IterationPath.replace(/"/g, ''),
+    };
+  
+    return entity;
+  }
 
   const handleChangePage = (event, newPage) => {
     setPage(newPage);
@@ -55,28 +90,71 @@ function Home() {
     setPage(0);
   };
 
+  const handleFileInputChange = (event) => {
+    const file = event.target.files[0];    
+
+    if (file) {
+      const reader = new FileReader();
+      
+      reader.onload = (e) => {
+        const fileContent = e.target.result;
+      
+        const lines = fileContent.split('\n');
+        var entities = lines.slice(1).map(createEntity);
+
+        setEntities([...entities]);
+      };
+      
+      reader.readAsText(file);
+    }
+  };
+
+  const handleButtonClick = () => {
+    fileInputRef.current.click();
+  };
+
+  const handleButtonClean = () => {
+    setEntities([]);
+  }
+
     return (
       <S.Container>
         <div>
           <div>
             <S.Title>
               <IconButton >
-                <AttachFileOutlinedIcon sx={{ fontSize: 40, color:'#fff' }}/>
+                <PictureAsPdfIcon sx={{ fontSize: 35, color:'#fff' }}/>
               </IconButton>
-              
-              File Summary
+              FILE SUMMARY
             </S.Title>
           </div>
+          
 
           <S.DivImport>
-            <Stack direction="row" spacing={2}>
-            
-              <Button variant="contained" color="success" sx={{ borderRadius: '10px'}}>
-              <IconButton>
-                <FileUploadOutlinedIcon />
-              </IconButton>
-               Importar
-              </Button>
+            <Stack direction="row">
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              style={{ display: 'none' }}
+              onChange={handleFileInputChange}
+            />
+            <Button 
+              variant="contained"
+              onClick={handleButtonClick}
+              startIcon={<FileUploadOutlinedIcon />}>
+              Importar
+            </Button>
+
+            <Button 
+             color='success'
+              variant="contained"
+              onClick={handleButtonClean}
+              startIcon={<RecyclingIcon />}
+              sx={{ marginLeft: '10px'}} >
+              Limpar
+            </Button>
+
             </Stack>
           </S.DivImport>
           
@@ -98,7 +176,7 @@ function Home() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {rows
+                    {entities
                       .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
                       .map((row) => {
                         return (
@@ -122,7 +200,7 @@ function Home() {
               <TablePagination
                 rowsPerPageOptions={[10, 25, 100]}
                 component="div"
-                count={rows.length}
+                count={entities.length}
                 rowsPerPage={rowsPerPage}
                 page={page}
                 onPageChange={handleChangePage}
