@@ -7,6 +7,7 @@ import FileUploadOutlinedIcon from '@mui/icons-material/FileUploadOutlined';
 import PictureAsPdfIcon from '@mui/icons-material/PictureAsPdf';
 import { IconButton } from '@mui/material';
 import RecyclingIcon from '@mui/icons-material/Recycling';
+import { Numbers } from '@mui/icons-material';
 
 const columns = [
   { 
@@ -16,7 +17,7 @@ const columns = [
     align: 'center'},
   { 
     id: 'workItem',
-    label: 'Work Item',
+    label: 'Tipo',
     minWidth: 2 ,
     align: 'center'
   },
@@ -60,24 +61,36 @@ const columns = [
 
 //Incio da Funcao Home !!
 function Home() {
+
   const fileInputRef = useRef(null);
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [entities, setEntities] = React.useState([]);
+  const [completeHour, setCompleteHour] = React.useState(0);
+  const [estimateHour, setEstimateHour] = React.useState(0);
 
   function createEntity (line) {
-    const [ID, WorkItemType, Title, AssignedTo, State, CompletedWork, OriginalEstimate, IterationPath] = line.split(',');
+    const regex = /"(.*?)"/g;
+    const valores = [];
+    let match;
+
+    while ((match = regex.exec(line)) !== null) {
+      valores.push(match[1]);
+    }
+
+    const [ID, WorkItemType, Title, AssignedTo, State, CompletedWork, OriginalEstimate, IterationPath] = valores;
+
     const entity = {
       id: ID.replace(/"/g, ''),
       workItem: WorkItemType.replace(/"/g, ''),
       title: Title.replace(/"/g, ''),
-      name: AssignedTo.replace(/"/g, ''),
+      name: AssignedTo.replace(/"/g, '').split('<')[0],
       situation: State.replace(/"/g, ''),
       completeHour: CompletedWork.replace(/"/g, ''),
       estimateHour: OriginalEstimate.replace(/"/g, ''),
       team: IterationPath.replace(/"/g, ''),
     };
-  
+
     return entity;
   }
 
@@ -98,119 +111,133 @@ function Home() {
       
       reader.onload = (e) => {
         const fileContent = e.target.result;
-      
         const lines = fileContent.split('\n');
         var entities = lines.slice(1).map(createEntity);
 
         setEntities([...entities]);
+        calcHour(entities);
       };
-      
       reader.readAsText(file);
     }
   };
+
+  function calcHour(entities){
+    let completeHour = 0;
+    let estimateHour = 0;
+
+    entities.map((entity)=> {
+        completeHour += parseFloat(entity.completeHour);
+        estimateHour += parseFloat(entity.estimateHour);
+    })
+
+    
+    setCompleteHour(completeHour);
+    setEstimateHour(estimateHour);
+  }
 
   const handleButtonClick = () => {
     fileInputRef.current.click();
   };
 
   const handleButtonClean = () => {
-    setEntities([]);
+    setEntities([...[]]);
   }
 
     return (
       <S.Container>
-        <div>
-          <div>
-            <S.Title>
+        <S.Title>
               <IconButton >
                 <PictureAsPdfIcon sx={{ fontSize: 35, color:'#fff' }}/>
               </IconButton>
               FILE SUMMARY
-            </S.Title>
-          </div>
+        </S.Title>
           
-
-          <S.DivImport>
-            <Stack direction="row">
-
-            <input
-              ref={fileInputRef}
-              type="file"
-              style={{ display: 'none' }}
-              onChange={handleFileInputChange}
-            />
-            <Button 
-              variant="contained"
-              onClick={handleButtonClick}
-              startIcon={<FileUploadOutlinedIcon />}>
-              Importar
-            </Button>
-
-            <Button 
-             color='success'
-              variant="contained"
-              onClick={handleButtonClean}
-              startIcon={<RecyclingIcon />}
-              sx={{ marginLeft: '10px'}} >
-              Limpar
-            </Button>
-
-            </Stack>
-          </S.DivImport>
-          
+      <div>
+        <S.DivImport>
+          <Stack direction="row">
           <div>
-            <Paper elevation={20} sx={{ padding: '1rem', margin: '10rem', borderRadius: '20px'}}>
-              <TableContainer sx={{ maxHeight: 440 }}>
-                <Table stickyHeader aria-label="sticky table">
-                  <TableHead>
-                    <TableRow>
-                      {columns.map((column) => (
-                        <TableCell
-                          key={column.id}
-                          align={column.align}
-                          style={{ minWidth: column.minWidth }}
-                        >
-                          {column.label}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {entities
-                      .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-                      .map((row) => {
-                        return (
-                          <TableRow hover role="checkbox" tabIndex={-1} key={row.code}>
-                            {columns.map((column) => {
-                              const value = row[column.id];
-                              return (
-                                <TableCell key={column.id} align={column.align}>
-                                  {column.format && typeof value === 'number'
-                                    ? column.format(value)
-                                    : value}
-                                </TableCell>
-                              );
-                            })}
-                          </TableRow>
-                        );
-                      })}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <TablePagination
-                rowsPerPageOptions={[10, 25, 100]}
-                component="div"
-                count={entities.length}
-                rowsPerPage={rowsPerPage}
-                page={page}
-                onPageChange={handleChangePage}
-                onRowsPerPageChange={handleChangeRowsPerPage}
+              <input
+                ref={fileInputRef}
+                type="file"
+                style={{ display: 'none' }}
+                onChange={handleFileInputChange}
               />
-            </Paper>
+              <Button 
+                color='primary'
+                variant="contained"
+                onClick={handleButtonClick}
+                startIcon={<FileUploadOutlinedIcon />}
+                sx={{ borderRadius: '20px'}}>
+                <b>Importar</b>
+              </Button>
           </div>
-
-            
-        </div>
+          <div >
+            <Button 
+                color='primary'
+                variant="contained"
+                onClick={handleButtonClean}
+                startIcon={<RecyclingIcon />}
+                sx={{ marginLeft: '10px', borderRadius: '20px'}} >
+                <b>Limpar</b>
+            </Button>
+          </div>
+          <S.DivResult >
+              <S.Label><b>Total Realizado:</b> {completeHour}</S.Label> 
+              <S.Label><b>Total Estimado:</b> {estimateHour}</S.Label> 
+          </S.DivResult >           
+          </Stack>
+        </S.DivImport>
+      </div>
+        
+          
+        <Paper elevation={20} sx={{ padding: '1rem', margin: '10rem', borderRadius: '20px'}}>
+            <TableContainer sx={{ maxHeight: 440 }}>
+              <Table stickyHeader aria-label="sticky table">
+                <TableHead>
+                  <TableRow>
+                    {columns.map((column) => (
+                      <TableCell
+                        key={column.id}
+                        align={column.align}
+                        style={{ minWidth: column.minWidth }}
+                      >
+                        {column.label}
+                      </TableCell>
+                    ))}
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {entities
+                    .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                    .map((row) => {
+                      return (
+                        <TableRow hover role="checkbox" tabIndex={-1} key={row.id}>
+                          {columns.map((column) => {
+                            const value = row[column.id];
+                            return (
+                              <TableCell key={column.id} align={column.align}>
+                                {column.format && typeof value === 'number'
+                                  ? column.format(value)
+                                  : value}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            <TablePagination
+              rowsPerPageOptions={[10, 25, 100]}
+              component="div"
+              count={entities.length}
+              rowsPerPage={rowsPerPage}
+              page={page}
+              onPageChange={handleChangePage}
+              onRowsPerPageChange={handleChangeRowsPerPage}
+            />
+          </Paper>
       </S.Container>
     );
   };

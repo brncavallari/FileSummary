@@ -2,7 +2,7 @@ import styled from 'styled-components';
 
 export const Container = styled.body`
   height: 100vh;
-  background: linear-gradient(to bottom, #23212e, #736a99, #d8d5e3);
+  background: linear-gradient(to bottom, #23212e, #6A5ACD, #d8d5e3);
 `;
 
 export const Title = styled.div`
@@ -14,9 +14,20 @@ export const Title = styled.div`
 `;
 
 export const DivImport = styled.div`
-    margin-bottom: -150px;
-    padding-left: 160px;
-    padding-top: 7rem;
+  margin-bottom: -150px;
+  padding-left: 160px;
+  padding-top: 7rem;
+`;
+
+export const Label = styled.label`
+  color:white;
+`;
+
+export const DivResult = styled.div
+`
+  display:grid;
+  position: absolute;
+  right: 190px;
 `;
 
 
